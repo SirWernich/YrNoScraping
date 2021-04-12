@@ -97,7 +97,7 @@ def get_location_name(soup):
     return soup.select('.page-header__location-name')[0].text.strip(' ')
 
     
-def get_weather_for_location(locationId):
+def get_forecast_for_location(locationId):
     url = "https://www.yr.no/en/forecast/hourly-table/{}".format(locationId)
     soup = get_web_page_soup(url)
     
@@ -109,7 +109,11 @@ def get_weather_for_location(locationId):
     forecast_today['forecast'] = [process_row(row) for row in rows]
     forecast_today['celestial'] = get_sunrise_sunset(soup)
     
-    return json.dumps(forecast_today)
+    return forecast_today
+
+
+def json_encode(weather):
+    return json.dumps(weather)
 
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
@@ -129,6 +133,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
     logging.info('Requesting info for location {}'.format(location_id))
 
-    weather_json = get_weather_for_location(location_id)
+    forecast = get_forecast_for_location(location_id)
+
+    logging.info('Retrieved weather for location {} ({})'.format(forecast['location'], location_id))
     
-    return func.HttpResponse(weather_json, mimetype='application/json')
+    return func.HttpResponse(json_encode(forecast), mimetype='application/json')
