@@ -6,13 +6,16 @@ Created on Sun Apr 11 19:21:26 2021
 @author: Wernich
 """
 
-import logging
+
 import azure.functions as func
+import json
+import logging
+import re
+import requests
 
 from bs4 import BeautifulSoup
-import requests
-import re
-import json
+from os import path
+from pathlib import Path
 
 
 def get_web_page_soup(url):
@@ -34,7 +37,7 @@ def get_row_time(row):
 def get_row_weather_img_path(row):
     img = row.select('.hourly-weather-table__weather img')[0]
     
-    return img.attrs['src']
+    return Path(path.basename(img.attrs['src'])).stem
 
 
 def get_row_temperature(row):
@@ -62,12 +65,12 @@ def get_row_wind_details(row):
     
     wind = dict();
     wind['speed'] = '{}m/s'.format(wind_value)
-    wind['description'] = wind_description
+    wind['desc'] = wind_description
     
     if wind_direction is not None:
-        wind['direction'] = '{}°'.format(wind_direction)
+        wind['dir'] = '{}°'.format(wind_direction)
     else:
-        wind['direction'] = None
+        wind['dir'] = None
     
     return wind
 
@@ -85,9 +88,9 @@ def get_sunrise_sunset(soup):
 def process_row(row):
     row_dict = dict()
     row_dict['time'] = get_row_time(row)
-    row_dict['weather_img'] = get_row_weather_img_path(row)
-    row_dict['temperature'] = get_row_temperature(row)
-    row_dict['precipitation'] = get_row_precipitation(row)
+    row_dict['icon'] = get_row_weather_img_path(row)
+    row_dict['temp'] = get_row_temperature(row)
+    row_dict['rain'] = get_row_precipitation(row)
     row_dict['wind'] = get_row_wind_details(row)
     
     return row_dict
